@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as pyp
 import time
 import pickle
+import brainModules as bm
 
 print "Starting Baby Brain Simulation"
 
@@ -68,8 +69,6 @@ while(numEpisodes < paramEpNum):
         babyShoulder = []
         babyElbow = []
         babyHead = []
-        babyReachCoords = np.array([0,0,0])
-        babyPullCoords = np.array([0,0,0])
         ## Receive / Parse message
         animMessage = win32file.ReadFile(p, 4096)[1]
         uf.parseMessage(animMessage, motherWrist, motherShoulder, motherElbow, motherHead, babyWrist, babyShoulder, babyElbow, babyHead)
@@ -114,16 +113,19 @@ while(numEpisodes < paramEpNum):
             if(babyRecFlag == True) and (babyReachTarget[0] - babyWrist[0] > paramContactThreshold):
                 babyWrist = np.array(babyWrist)
                 babyReachTarget = np.array(babyReachTarget)
-                babyReachCoords = np.array(babyReachTarget - babyWrist) * babyReachWeight[0]
                 if(numEpisodes == 1):
                     babyShoulderBias = uf.setShoulderBias(babyShoulderBias,babyReachTarget,babyShoulder,babyWrist,numEpisodes,gestureFlag)
+                babyReachCoords = np.array(babyReachTarget - babyWrist) * babyReachWeight[0]
                 babyVirtualTarget = uf.virtualMotorCorrection(babyShoulder,babyShoulderBias)
                 babyGestCoords = np.array(babyVirtualTarget - babyWrist) * babyReachWeight[1]
                 babyMotorError = (babyReachCoords + babyGestCoords)
+                #babyMotorError = bm.babyMotorControl(babyReachTarget,babyVirtualTarget,babyReachWeight,babyWrist,)
                 messageToSend = 'REACH' + ' ' + str(babyMotorError[0] / paramBabyIKReach) + ' ' + str(babyMotorError[1] /paramBabyIKReach) + ' ' + str(babyMotorError[2] /paramBabyIKReach) + ' ' + str(simulationTime)
                 # child knows when mother starts to respond / move arm
+                #if(bm.babyActionRec(motherWrist,moWristInit,paramBabyRecThreshold)):
                 if(abs(sum(motherWrist) - sum(moWristInit)) > paramBabyRecThreshold):
                     babyRecFlag = False
+                    #babyReachWeight = bm.babyPostureLearning(babyReachWeight,paramRWInc)
                     babyReachWeight[1] = babyReachWeight[1] + paramRWInc
                     babyReachWeight = babyReachWeight / np.sum(babyReachWeight)
                     babyShoulderBias = uf.setShoulderBias(babyShoulderBias,babyReachTarget,babyShoulder,babyWrist,numEpisodes,gestureFlag)

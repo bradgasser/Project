@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as pyp
 import time
 import pickle
+import brainModules as bm
 
 print "Starting Mommy Brain Simulation"
 
